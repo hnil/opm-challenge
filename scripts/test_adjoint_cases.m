@@ -11,7 +11,7 @@ if exist('OCTAVE_VERSION', 'builtin') ~= 0
 end
 
 %mycases={'1D','1D_LARGE','3D'}
-mycases={'1D'}
+mycases={'1D_LARGE'}
 % make deck
 for i=1:numel(mycases)
     mycase=mycases{i};
@@ -19,7 +19,9 @@ for i=1:numel(mycases)
         case '1D' 
             [deck,case_name] =MODEL_1D_DEBUG(moduledir)
         case '1D_LARGE'    
-            [deck,case_name] =MODEL_1D_LARGE_DEBUG(moduledir,1)
+            [deck,case_name] =MODEL_1D_LARGE_DEBUG(moduledir,10)
+        case '2D'
+            [deck,case_name] =MODEL_2D_DEBUG(moduledir,1)
         case '3D'    
             [deck,case_name] =MODEL_3D_DEBUG(moduledir,1)
         otherwise
@@ -94,7 +96,8 @@ copyfile(outputprefix,fullfile(outputdir,'inputfiles'))
 toc
 opm_rep=reports{2};
 
-wellsols=reMapWellsols(wellsols);
+wellsols_org=wellsols;
+[wellsols,ind]=reMapWellsols(wellsols);
 nstep = numel(schedule_mrst.step.val);
 cderv = zeros(numel(schedule_mrst.control),numel(schedule_mrst.control(1).W))
 ctrl =schedule_mrst.step.control;
@@ -103,7 +106,7 @@ for i=1:nstep
 end
 
 W= schedule_mrst.control(1).W;
-[a,ind]=sort({W.name});
+[a,ind]=sort(opm_rep.adjoint.wnames);
 disp('********************************************************')
 fprintf('objective\t mrst:\t');
 fprintf('%f ',[objad{:}]);
