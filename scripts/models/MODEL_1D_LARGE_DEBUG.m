@@ -2,7 +2,7 @@ function [deck,case_name] =MODEL_1D_LARGE_DEBUG(moduledir,tfac)
 mydir=fullfile(pwd,'data');
 case_name='model_1d_large_debug';
 if(tfac~=1)
-    case_name = [upper(case_name),'num2str(tfac)'];
+    case_name = [upper(case_name),'_',num2str(tfac)];
 else
     case_name = [upper(case_name)];
 end
