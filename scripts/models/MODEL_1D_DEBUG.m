@@ -19,7 +19,7 @@ rock.perm=rock.perm*darcy;
 max_coord=max(g.nodes.coords,[],1);
 min_coord=min(g.nodes.coords,[],1);
 z_mean = mean(g.cells.centroids(:,3));
-plotGrid(g)
+%plotGrid(g)
 %grdecl_filename = fullfile(mydir,[case_name,'.GRDECL'])
 %writeGRDECL(grdecl,grdecl_filename)
 %%

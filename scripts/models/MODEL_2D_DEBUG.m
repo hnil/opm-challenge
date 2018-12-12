@@ -1,5 +1,5 @@
 function [deck,case_name] =MODEL_2D_DEBUG(moduledir,layers)
-case_name=['model_2d_debug_adjoint_',num2str(layers)];
+case_name=['model_2d_debug_',num2str(layers)];
 case_name = upper(case_name);
 gravity on 
 Lx=2000;

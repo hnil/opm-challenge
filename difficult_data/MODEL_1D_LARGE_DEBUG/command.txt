@@ -1,0 +1,1 @@
+flow --enable-adaptive-time-stepping=false --solve-welleq-initially=true --flow-linear-solver-verbosity=10 --output-dir=temp MODEL_1D_LARGE_DEBUG/MODEL_1D_LARGE_DEBUG.DATA
