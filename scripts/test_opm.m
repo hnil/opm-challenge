@@ -11,7 +11,7 @@ if exist('OCTAVE_VERSION', 'builtin') ~= 0
 end
 force_timestep=true;
 %mycases={'1D','1D_LARGE','3D'}
-mycases={'1D_LARGE'}
+mycases={'1D'}
 % make deck
 for i=1:numel(mycases)
     mycase=mycases{i};
@@ -55,10 +55,11 @@ else
 end
 deck.SOLUTION=mrstStateToSolution(model.G,state0);
 writeDeck(deck,outputprefix);
-
-
+%%
+nonlinear.LinearSolver = selectLinearSolverAD(model,'BackslashThreshold',  1)
+%
 %[wellsols{1}, states{1}, reports{1}] = simulateScheduleAD(state0, model, schedule_mrst,'NonLinearSolver',nonlinear);
-[wellsols{1}, states{1}, reports{1}] = simulateScheduleAD(state0, model, schedule_mrst);
+[wellsols{1}, states{1}, reports{1}] = simulateScheduleAD(state0, model, schedule_mrst,'NonLinearSolver', nonlinear)
 
                                      
 
