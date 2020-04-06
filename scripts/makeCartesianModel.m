@@ -1,11 +1,13 @@
-mrstModule add ad-core ad-blackoil ad-props mrst-gui project-nccs co2lab project-multiresolution-ve matlab_bgl coarsegrid deckformat
+mrstModule add ad-core ad-blackoil ad-props mrst-gui deckformat
+mrstModule add wellpaths
+addpath("/data/hnil/BITBUCKET/mrst-bitbucket/mrst-model-io/opm_gridprocessing/")
 physDims = [5000 5000 900]
 res = [20 20 10]*2
 G=cartGrid(res,physDims)
 %% smaller model
 grdecl=simpleGrdecl(G.cartDims,0,'flat',true,'physDims',physDims,'undisturbed',true);
-perm = 100*ones(G.cells.num,1);
-
+perm = 500*ones(G.cells.num,1);
+grdecl.ZCORN = grdecl.ZCORN+1000
 grdecl.PERMX=perm;
 grdecl.PERMY=perm;
 grdecl.PERMZ=perm;
@@ -43,7 +45,7 @@ colorbar
 deck_org = readEclipseDeck("/data/hnil/GITHUB/OPM/opm-tests/aquifer-oilwater/2D_OW_CTAQUIFER.DATA")
 deck_org.SOLUTION=rmfield(deck_org.SOLUTION,'AQUCT');
 deck_org.SOLUTION=rmfield(deck_org.SOLUTION,'AQUANCON');
-deck_org.SOLUTION.EQUIL=[0 270 700 0 0 0 0 0 0 1 0]
+deck_org.SOLUTION.EQUIL=[0 270 1500 0 0 0 0 0 0 1 0]
 %
 deck=deck_org;
 deck.GRID = grdecl_c;
@@ -57,9 +59,9 @@ deck.RUNSPEC.DIMENS = deck.GRID.cartDims;
 %x = linespace(
 %path = 
 wgen={}
-path = [3500 400 400; 4000 400 400] 
+path = [1500 400 1300; 4000 400 1300] 
 wgens{1}=struct('wname','P1','sign',-1,'type','bhp','val',200*barsa,'refDepth',0,'path',path,'comp_i',[0 1 0]);
-path = [3700 1000 400; 3700 1000 600] 
+path = [1700 4000 1700; 3700 4000 1700] 
 wgens{2}=struct('wname','I1','sign',1,'type','bhp','val',400*barsa,'refDepth',0,'path',path,'comp_i',[1 0 0]);
 Wo=[];Ws=[]
 for i=1:numel(wgens)
@@ -74,7 +76,6 @@ for i=1:numel(wgens)
                 'Name', wgen.wname,...
                 'refDepth',wgen.refDepth);        
 %
-    addpath('/data/hnil/BITBUCKET/mrst-bitbucket/projects/project-nccs/nccs2019/matlab/tofrancesca/')
     tt = computeTraversedCells(G_c, wgen.path)
     V = tt.coord2 - tt.coord1;
     Ws = addWell(Ws,G_c,rock_c,tt.cells,'lineSegments', V,...
@@ -87,8 +88,8 @@ for i=1:numel(wgens)
 end
 %%
 max_perf=0;
-for i=1:numel(W)
-    max_perf=max(max_perf,numel(W(i).cells))
+for i=1:numel(Ws)
+    max_perf=max(max_perf,numel(Ws(i).cells))
 end
 %%
 
@@ -103,8 +104,8 @@ ylabel('y')
 %
 W=Ws;
 deck.SCHEDULE.control(1)=mrstWellToControl(W, G_c, deck.SCHEDULE.control(1),deck.RUNSPEC,'add_wellindex',true)
-steps=linspace(0,10,40)*365;
-steps=diff(steps);
+steps=linspace(0,10,20)*365;
+steps=[linspace(0.1,steps(2),20),diff(steps)];
 deck.SCHEDULE.step.control = ones(size(steps));
 deck.SCHEDULE.step.val = steps;
 deck.RUNSPEC.WELLDIMS(2)=max_perf;
@@ -115,17 +116,13 @@ deck.SCHEDULE.RPTSCHED=1;
 run_mrst=false
 
 %%
-if(~use_org)
-    case_name = ['CARTGRID','_',num2str(coarsen(1)),'_',num2str(coarsen(2)),'_',num2str(coarsen(3))];
-else
-    case_name = ['CARTGRID_ORG']
-end
-nw=1;
-for i=1:numel(ws)
-    nw = max([nw,numel(ws)]);
-end
-deck.RUNSPEC.WELLDIMS(2)=nw
+
+case_name = ['CARTGRID','_',num2str(G.cartDims(1)),'_',num2str(G.cartDims(2)),'_',num2str(G.cartDims(3))];
+
+
+deck.RUNSPEC.WELLDIMS(2)=max_perf
 outputprefix=fullfile(pwd(),'tmp_data',case_name);
+mkdir(outputprefix)
 tic;writeDeck(deck,outputprefix);toc;
 deckfile=fullfile(outputprefix,[case_name,'.DATA']);
 disp('finnished writing deck file');
@@ -158,7 +155,9 @@ if(run_mrst)
     times=cellfun(@(x) reshape(x.ReservoirTime,[],1), all_reports,'UniformOut',false);
     plotWellSols(all_wellsols,times,'datasetnames',{'mrst1','mrst2','opm'})
 end
-
-
+clf,
+plotToolbar(G_c,states)
+%%
+plotWellSols(wellsols)
 
 
