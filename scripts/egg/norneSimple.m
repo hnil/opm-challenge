@@ -23,7 +23,7 @@ rock  = compressRock(rock, G.cells.indexMap);
 
 %% only valid for egg model
 gridfromdeck=true;
-refine=[1,1,1];
+refine=[2,2,1];
 deck_new = rmfield(deck,'SCHEDULE');
 deck_new = refineDeck(deck_new,refine)
 G_new = initEclipseGrid(deck_new,'SplitDisconnected',false);
@@ -52,6 +52,8 @@ for i=1:numel(schedule.control)
                 newperfs=false;
             end
         end
+        
+        
         if(newperfs)
             tmp = computeTraversedCellsNew(G_new, w.trajectory);
             W_new   = addWell(W_new, G_new, rock_new, tmp.cell, 'name', w.name, 'type', w.type, 'sign', ...
@@ -67,14 +69,22 @@ for i=1:numel(schedule.control)
             wnew.cstatus=W(k).compi;
             W_new=[W_new;wnew];
         end
+        % hack for not supported wells in writing
+        if(strcmp(W_new(end).type,'default') || strcmp(W_new(end).type,'rate'))
+            W_new(end).type='bhp';
+            W_new(end).status=0;
+        end
+        if(strcmp(lower(W_new(end).type),'resv_history'))
+            W_new(end).type='resv';
+        end
     end
     schedule_new.control(i).W=W_new;
     W_prev=W;
     W_prev_new=W_new;
 end
 disp('new wells calculated')
-%
-nstep=-5;
+%%
+nstep=1;
 mkdir('tmp')
 case_name='NORNE'
 outputprefix=fullfile(pwd(),'tmp',case_name);
@@ -91,7 +101,7 @@ end
 deck_new = model2Deck(model_new, schedule_new, 'deck', deck_new,'gridfromdeck',true)
 deck_new.RUNSPEC.WELLDIMS(2)=100;
 writeDeck(deck_new, outputprefix)
-%
+%%
 deckfile=fullfile(outputprefix,[case_name,'.DATA']);
 outputdir=fullfile(pwd(),'tmp_sims',case_name);
 simulator='/home/hnil/Documents/GITHUB/OPM/opm_source/master/builds/release_mpi/opm-simulators/bin/flow'
