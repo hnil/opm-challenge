@@ -9,15 +9,11 @@ G = computeBoundingBoxes(G);
 %rock.perm = mean(rock.perm).*ones(G.cells.num, 3);
 [state0, model, schedule, nonlinear] = initEclipseProblemAD(deck, 'G', G, 'TimestepStrategy', 'none');
 
-W = schedule.control.W;
-W = addTrajectories(W, model.G, 2);
-
-
 %% refine
 
 %% only valid for egg model
 gridfromdeck=true;
-refine=[1,1,1];
+refine=[4,4,2];
 deck_new = rmfield(deck,'SCHEDULE');
 physdims=deck_new.GRID.cartDims.*[deck_new.GRID.DX(1),deck_new.GRID.DY(1),deck_new.GRID.DZ(1)]
 if(gridfromdeck)
@@ -44,32 +40,19 @@ figure(2),clf,plotGrid(G_new)
     %%
 G_new=computeGeometry(G_new);
 G_new = computeBoundingBoxes(G_new);
+[schedule_new,maxperf] = makeNewSchedule(schedule,model.G, G_new,rock_new)
 
-W_new = [];
-maxperf=0;
-for k = 1:numel(W)
-    w = W(k);
-    tmp = computeTraversedCellsNew(G_new, w.trajectory);
-    W_new   = addWell(W_new, G_new, rock_new, tmp.cell, 'name', w.name, 'type', w.type, 'sign', ...
-                      w.sign, 'val', w.val, 'refDepth', w.refDepth, ...
-                      'compi', w.compi, 'lims', w.lims, ...
-                      'lineSegments', bsxfun(@times, tmp.vec, tmp.weight) );
-    maxperf=max(maxperf,numel(W_new(end).cells));              
-end
-disp('new wells calculated')
 %%
-nstep=-5;
+nstep=10;
 mkdir('tmp')
 case_name='EGG'
 outputprefix=fullfile(pwd(),'tmp',case_name);
 mkdir(outputprefix)
 model_new=model;
 model_new.G=G_new;
-schedule_new = schedule
-schedule_new.control.W=W_new;
 if(nstep>0)
-schedule_new.step.control=schedule_new.step.control(1:nstep)
-schedule_new.step.control=schedule_new.step.val(1:nstep)
+    schedule_new.step.control=schedule_new.step.control(1:nstep)
+    schedule_new.step.val=schedule_new.step.val(1:nstep)
 end
 deck_new = model2Deck(model_new, schedule_new, 'deck', deck_new,'gridfromdeck',true)
 deck_new.RUNSPEC.WELLDIMS(2)=100;
@@ -84,20 +67,24 @@ deckfile=fullfile(outputprefix,[case_name,'.DATA']);
 %
 outputdir=fullfile(pwd(),'tmp_sims',case_name);
 simulator='/home/hnil/Documents/GITHUB/OPM/opm_source/master/builds/release_mpi/opm-simulators/bin/flow'
-[wellsols, states, reports_opm, extra] = runDeckOPM(deckfile,...
+%%
+%[wellsols, states, reports_opm, extra] =... 
+runDeckOPM(deckfile,...
                                                     'outputdir',outputdir,...
                                                     'simulator',simulator,...
                                                     'force_timestep',false,...
-                                                    'verbose',false,...
+                                                    'verbose',true,...
                                                     'no_output',false,...
-                                                    'np',1,...
-                                                    'openmp',1);                                             
+                                                    'np',20,...
+                                                    'lineartol',1e-3,...
+                                                    'threads',1,...
+                                                    'strongdefault',true);                                             
   plotWellSols(wellsols)
   %% run ion mrst
   run_mrst=true;
   if(run_mrst)
       tic
-      lastn = maxNumCompThreads(1)
+      lastn = maxNumCompThreads(2);
       %buildLinearSolvers(true)
       %[CXXFLAGS, LINK, LIBS] = setupMexOperatorBuildFlags()
       %buildMexOperators(true)
