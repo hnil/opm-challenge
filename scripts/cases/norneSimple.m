@@ -79,12 +79,14 @@ simulator='/home/hnil/Documents/GITHUB/OPM/opm_source/master/builds/release_mpi/
       %buildLinearSolvers(true)
       %[CXXFLAGS, LINK, LIBS] = setupMexOperatorBuildFlags()
       %buildMexOperators(true)
+      %%
       useMex=true;
       deck_mrst=readEclipseDeck(deckfile);
       deck_mrst=convertDeckUnits(deck_mrst);
       %[state0_mrst, model_mrst, schedule_mrst, nonlinear_mrst] = initEclipseProblemAD(deck_mrst);
       [state0_mrst, model_mrst, schedule_mrst, nonlinear_mrst] = initEclipseProblemAD(deck_mrst,'TimestepStrategy', 'ds', 'useCPR', true, ...
           'useMex', useMex);
+      %%
       %[wellsols, states, reports] = simulateScheduleAD(state0_mrst, model_mrst, schedule_mrst)
       %
       problem = packSimulationProblem(state0_mrst, model_mrst, schedule_mrst, 'egg', ...
