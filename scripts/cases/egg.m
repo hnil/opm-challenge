@@ -12,8 +12,11 @@ G = computeBoundingBoxes(G);
 %% refine
 
 %% only valid for egg model
+%%
+for refh=5:8
+    for refz=refh
 gridfromdeck=true;
-refine=[4,4,2];
+refine=[refh,refh,refz];
 deck_new = rmfield(deck,'SCHEDULE');
 physdims=deck_new.GRID.cartDims.*[deck_new.GRID.DX(1),deck_new.GRID.DY(1),deck_new.GRID.DZ(1)]
 if(gridfromdeck)
@@ -43,9 +46,9 @@ G_new = computeBoundingBoxes(G_new);
 [schedule_new,maxperf] = makeNewSchedule(schedule,model.G, G_new,rock_new)
 
 %%
-nstep=10;
+nstep=-1;
 mkdir('tmp')
-case_name='EGG'
+case_name=['EGG','_RX_',num2str(refine(1)),'_RY_',num2str(refine(2)),'_RZ_',num2str(refine(3))]
 outputprefix=fullfile(pwd(),'tmp',case_name);
 mkdir(outputprefix)
 model_new=model;
@@ -55,8 +58,11 @@ if(nstep>0)
     schedule_new.step.val=schedule_new.step.val(1:nstep)
 end
 deck_new = model2Deck(model_new, schedule_new, 'deck', deck_new,'gridfromdeck',true)
-deck_new.RUNSPEC.WELLDIMS(2)=100;
+deck_new.RUNSPEC.WELLDIMS(2)=maxperf;
 writeDeck(deck_new, outputprefix)
+    end
+end
+%%
 %
 pth = getDatasetPath('egg');
 %deckfile_org=fullfile(pth,'MRST','Egg_Model_ECL.DATA');

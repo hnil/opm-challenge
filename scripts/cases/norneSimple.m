@@ -23,7 +23,7 @@ rock  = compressRock(rock, G.cells.indexMap);
 
 %% only valid for egg model
 gridfromdeck=true;
-refine=[2,2,1];
+refine=[1,1,1];
 deck_new = rmfield(deck,'SCHEDULE');
 deck_new = refineDeck(deck_new,refine)
 G_new = initEclipseGrid(deck_new,'SplitDisconnected',false);
@@ -36,10 +36,11 @@ figure(2),clf,plotGrid(G_new)
     %%
 G_new=computeGeometry(G_new);
 G_new = computeBoundingBoxes(G_new);
+%%
 [schedule_new,maxperf] = makeNewSchedule(schedule,model.G, G_new,rock_new)
 disp('new wells calculated')
 %%
-nstep=1;
+nstep=-1;
 mkdir('tmp')
 case_name='NORNE'
 outputprefix=fullfile(pwd(),'tmp',case_name);
@@ -54,7 +55,7 @@ if(nstep>0)
 end
 %%
 deck_new = model2Deck(model_new, schedule_new, 'deck', deck_new,'gridfromdeck',true)
-deck_new.RUNSPEC.WELLDIMS(2)=100;
+deck_new.RUNSPEC.WELLDIMS(2)=maxperf;
 writeDeck(deck_new, outputprefix)
 %%
 deckfile=fullfile(outputprefix,[case_name,'.DATA']);
@@ -66,7 +67,7 @@ simulator='/home/hnil/Documents/GITHUB/OPM/opm_source/master/builds/release_mpi/
                                                     'force_timestep',false,...
                                                     'verbose',false,...
                                                     'no_output',false,...
-                                                    'np',1,...
+                                                    'np',10,...
                                                     'openmp',1,...
                                                     'strongdefault',true);                                             
   plotWellSols(wellsols)

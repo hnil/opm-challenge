@@ -5,10 +5,12 @@ mrstVerbose true
 opm = mrstPath('opm-tests');
 assert(~isempty(opm), 'You must register https://github.com/opm/opm-tests as a module!');
 run_mrst=true;
-case_name='SPE9_CP'
+org_case_name='SPE9_CP'
 np=1;%number of mpi in opm number of treads for mrst
-refine=[1,1,1];
-[deck, output] = getDeckOPMData('spe9', case_name);
+for ref=1:1
+refine=[1,1,1]*ref;
+[deck, output] = getDeckOPMData('spe9', org_case_name);
+case_name=[org_case_name,'_RX_',num2str(refine(1)),'_RY_',num2str(refine(2)),'_RZ_',num2str(refine(3))];
 %%
 G = initEclipseGrid(deck,'SplitDisconnected',false);
 G = computeGeometry(G);    
@@ -49,10 +51,12 @@ end
 deck_new = model2Deck(model_new, schedule_new, 'deck', deck_new,'gridfromdeck',true)
 deck_new.RUNSPEC.WELLDIMS(2)=maxperf;
 writeDeck(deck_new, outputprefix)
+end
 %%
 deckfile=fullfile(outputprefix,[case_name,'.DATA']);
 outputdir=fullfile(pwd(),'tmp_sims',case_name);
 simulator='/home/hnil/Documents/GITHUB/OPM/opm_source/master/builds/release_mpi/opm-simulators/bin/flow'
+%deckfile='/data/hnil/GITHUB/opm-data/spe9/SPE9_CP.DATA'
 [wellsols, states, reports_opm, extra] = runDeckOPM(deckfile,...
                                                     'outputdir',outputdir,...
                                                     'simulator',simulator,...
@@ -96,6 +100,16 @@ simulator='/home/hnil/Documents/GITHUB/OPM/opm_source/master/builds/release_mpi/
   
   %%
   rt=getReportTimings(reports_mrst)
+  disp('******************************* MRST **************************')
+  ff=fields(rt)
+  for i=1:numel(ff)
+    fprintf('%s \t %g \n', ff{i},sum([rt.(ff{i})]))
+  end
+
+  disp('*************************** OPM *******************************')
+  command = ['tail -n 25 ', fullfile(outputdir,case_name),'.DBG', ' | head -n 16'];
+  system(command);
+  
   
   
   

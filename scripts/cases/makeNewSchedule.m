@@ -17,17 +17,19 @@ for i=1:numel(schedule.control)
         
         
         if(newperfs)
-            tmp = computeTraversedCellsNew(G_new, w.trajectory);
+            tmp = computeTraversedCellsNew(G_new, w.trajectory);            
             W_new   = addWell(W_new, G_new, rock_new, tmp.cell, 'name', w.name, 'type', w.type, 'sign', ...
-                w.sign, 'val', w.val, 'refDepth', w.refDepth, ...
-                'compi', w.compi, 'lims', w.lims, ...
-                'lineSegments', bsxfun(@times, tmp.vec, tmp.weight) );
+                    w.sign, 'val', w.val, 'refDepth', w.refDepth, ...
+                    'compi', w.compi, 'lims', w.lims, ...
+                    'lineSegments', bsxfun(@times, tmp.vec, tmp.weight) );
+            W_new(end).status=w.status;
             maxperf=max(maxperf,numel(W_new(end).cells));
         else
             wnew=W_prev_new(k);
             wnew.type = W(k).type;
             wnew.val = W(k).val;
-            wnew.cstatus=W(k).status;
+            wnew.status=W(k).status;
+            wnew.sign=W(k).sign;
             wnew.compi=W(k).compi;
             W_new=[W_new;wnew];
         end
