@@ -54,7 +54,10 @@ nseg = size(traj,1)-1;
 % get inital relevant subset of faces for whole trajectory
 fix0 = getFacesCloseToSegment(G, traj, 'faceIx', opt.faces);
 if isempty(fix0)
-    error('Trajectory does not appear to intersect grid');
+    %error('Trajectory does not appear to intersect grid');
+    T=[];
+    extra=[];
+    return 
 end
 
 cnt       = 0;      
